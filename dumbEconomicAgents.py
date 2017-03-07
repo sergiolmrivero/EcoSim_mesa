@@ -29,10 +29,10 @@ class DumbFirm(Firm):
     profit_margin = .5
     
     def __init__(self, ag_name, econModel, economy, initial_assets,
-                 initial_liabilities, initial_cash, initial_inventory):
+                 initial_liabilities, initial_cash):
         
       super().__init__(ag_name, econModel, economy, initial_assets,
-           initial_liabilities, initial_cash, initial_inventory)
+           initial_liabilities, initial_cash)
 
     #colocar as funções que serão ativadas no step
     def estimate_demand(self):
@@ -51,7 +51,8 @@ class DumbFirm(Firm):
     
     def contract_labor(self):
         self.demmanded_labor = self.estimated_demmand/self.technical_coefficient
-        print(["contract_labor - Firm: ", self.unique_id,"Demmanded Labor: ",self.demmanded_labor])
+        print(["contract_labor - Firm: ", self.unique_id,
+               "Demmanded Labor: ",self.demmanded_labor])
         self.labor_market.take_offers(self,self.demmanded_labor)
 
     def produce(self):
@@ -88,10 +89,7 @@ class DumbFirm(Firm):
         self.get_profits()
         self.update_available_cash()
         self.update_net_worth()
-        print([self.model.schedule.time,"Firm: Net Worth", self.net_worth])
-        self.bookkeeper.balance_sheet.show_assets()        
-        self.bookkeeper.balance_sheet.show_liabilities()
-
+  
 
         
     
@@ -104,11 +102,11 @@ class DumbHousehold(Household):
     labor_capacity= 10
     
     def __init__(self, ag_name, econModel, economy, initial_assets,
-                 initial_liabilities, initial_cash, initial_inventory):
+                 initial_liabilities, initial_cash):
         
         
         super().__init__(ag_name, econModel, economy, initial_assets,
-             initial_liabilities, initial_cash, initial_inventory)
+             initial_liabilities, initial_cash)
 
     #colocar as funções que serão ativadas no step
     def estimate_available_labor(self):
@@ -139,7 +137,9 @@ class DumbHousehold(Household):
         my_bid = GoodOrService("labor",1,labor_necessity,
                                labor_available.unit_value_of_gs,
                                labor_value)
-        print([self.unique_id, "my_bid: ",my_bid.quantity_of_gs, "Food_demmand: ", food_demmand.quantity_of_gs, "Cash: ", self.available_cash])
+        print([self.unique_id, "my_bid: ",my_bid.quantity_of_gs, 
+               "Food_demmand: ", food_demmand.quantity_of_gs, 
+               "Cash: ", self.available_cash])
         #self.bookkeeper.balance_sheet.show_assets()        
         #self.bookkeeper.balance_sheet.show_liabilities()
         self.labor_market.add_offer(self,my_bid)
@@ -158,7 +158,8 @@ class DumbHousehold(Household):
         food_stock = self.bookkeeper.get_asset("corn")
         food_necessities = food_demmand.quantity_of_gs - food_stock.quantity_of_gs
         #food_necessities = food_demmand.quantity_of_gs
-        print(["buy_goods - HH: ", self.unique_id,"Food Necesities: ",food_necessities])
+        print(["buy_goods - HH: ", self.unique_id,
+               "Food Necesities: ",food_necessities])
         self.goods_market.take_offers(self, food_necessities)
         
     def consume_goods(self):

@@ -123,12 +123,12 @@ class EconomicAgent (Agent):
 
   
     def __init__(self, ag_name, econModel, economy, initial_assets,
-                 initial_liabilities, initial_cash, initial_inventory):
+                 initial_liabilities, initial_cash):
         super().__init__(ag_name, econModel)
         self.economy = economy
         self.markets = dict()
         self.bookkeeper = Bookkeeper(self,initial_assets,initial_liabilities, 
-                                     initial_cash, initial_inventory)
+                                     initial_cash)
         self.net_worth = 0.0
         self.available_cash = initial_cash
       
@@ -167,10 +167,10 @@ class Firm (EconomicAgent):
     
     
     def __init__(self, ag_name, econModel, economy, initial_assets,
-                 initial_liabilities, initial_cash, initial_inventory):
+                 initial_liabilities, initial_cash):
         
          super().__init__(ag_name, econModel, economy, initial_assets,
-                          initial_liabilities, initial_cash, initial_inventory)
+                          initial_liabilities, initial_cash)
           
 
     def supply(self, an_agent, a_good_or_service, value):
@@ -194,10 +194,10 @@ class Household (EconomicAgent):
     hh_members = None
     
     def __init__(self, ag_name, econModel, economy, initial_assets,
-                 initial_liabilities, initial_cash, initial_inventory):
+                 initial_liabilities, initial_cash):
         
          super().__init__(ag_name, econModel, economy, initial_assets,
-                          initial_liabilities, initial_cash, initial_inventory)
+                          initial_liabilities, initial_cash)
 
     def consume(self, an_agent, a_good_or_service, value):
         pass   
@@ -211,10 +211,10 @@ class Household (EconomicAgent):
 class Bank (EconomicAgent):
     
     def __init__(self, ag_name, econModel, economy, initial_assets,
-                 initial_liabilities, initial_cash, initial_inventory):
+                 initial_liabilities, initial_cash):
        
          super().__init__(ag_name, econModel, economy, initial_assets,
-                          initial_liabilities, initial_cash, initial_inventory)
+                          initial_liabilities, initial_cash)
 
     def interest(self, paying_receivin, an_agent):
         pass    
@@ -227,10 +227,10 @@ class Bank (EconomicAgent):
 class Government (EconomicAgent):
     
     def __init__(self, ag_name, econModel, economy, initial_assets,
-                 initial_liabilities, initial_cash, initial_inventory):
+                 initial_liabilities, initial_cash):
         
          super().__init__(ag_name, econModel, economy, initial_assets,
-                          initial_liabilities, initial_cash, initial_inventory)
+                          initial_liabilities, initial_cash)
 
         
     def cash_transfer(self, a_household):
@@ -249,10 +249,10 @@ class Government (EconomicAgent):
 
 class CentralBank (EconomicAgent):
     def __init__(self, ag_name, econModel, economy, initial_assets,
-                 initial_liabilities, initial_cash, initial_inventory):
+                 initial_liabilities, initial_cash):
        
          super().__init__(ag_name, econModel, economy, initial_assets,
-                          initial_liabilities, initial_cash, initial_inventory)
+                          initial_liabilities, initial_cash)
 
     
     def interest(self, a_bank):

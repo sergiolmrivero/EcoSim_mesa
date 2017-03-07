@@ -16,17 +16,15 @@ class Bookkeeper(object):
     
     cash_flow = None
     balance_sheet = None
-    inventory = None
     agent = None
     
     
     def __init__(self,agent,initial_assets,initial_liabilities, 
-                 initial_cash, initial_inventory):
+                 initial_cash):
         self.agent = agent
         self.cash_flow = CashFlow(self, agent, initial_cash)
         self.balance_sheet = BalanceSheet(self, agent,initial_assets, 
                                           initial_liabilities, initial_cash)
-        self.inventory = initial_inventory
         
     
     def buy_gs(self,agent_seller, a_good_or_service, price):
@@ -36,7 +34,6 @@ class Bookkeeper(object):
             - Starts the sell method of the seller
             - Updates the cash_flow of the agent
             - Updates the balance_sheet of the agent
-            - Updates the inventory of the agent.
         """
         date = self.agent.model.schedule.time
         if self.have_cash(price):
@@ -44,7 +41,6 @@ class Bookkeeper(object):
                 self.cash_flow.outflux(date,agent_seller, price)
                 self.balance_sheet.update_cash(self.cash_flow.available_cash)
                 self.balance_sheet.add_asset(a_good_or_service)
-                self.add_inventory(a_good_or_service)     
                 print(["Agent: ", self.agent.unique_id, " buying: ", 
                        a_good_or_service.name_of_gs,
                        "from: ", agent_seller.unique_id])
@@ -67,14 +63,12 @@ class Bookkeeper(object):
             - Starts the sell method of the seller
             - Updates the cash_flow of the agent
             - Updates the balance_sheet of the agent
-            - Updates the inventory of the agent.
         """
         date = self.agent.model.schedule.time
-        if self.have_gs(a_good_or_service):
+        if self.balance_sheet.have_asset(a_good_or_service):
             self.cash_flow.influx(date,agent_buyer, price)
             self.balance_sheet.update_cash(self.cash_flow.available_cash)
             self.balance_sheet.subtract_asset(a_good_or_service)
-            self.subtract_inventory(a_good_or_service)       
             return True
         else:
             print(["sell_gs - Agent: ", self.agent.unique_id, " not selling:", 
@@ -88,20 +82,6 @@ class Bookkeeper(object):
         else:
             return False
         
-    def have_gs(self,a_good_or_service):
-        if a_good_or_service.name_of_gs in self.inventory.keys():
-            if self.inventory[a_good_or_service.name_of_gs].quantity_of_gs >= a_good_or_service.quantity_of_gs:
-                return True
-            else:
-                print(["have_gs - Agent: ", self.agent.unique_id, " not selling ", 
-                       a_good_or_service.name_of_gs,
-                       "insuficient quantity: ", self.inventory[a_good_or_service.name_of_gs].quantity_of_gs, " < ", a_good_or_service.quantity_of_gs])
-                return False
-        else:
-            print(["have_gs - Agent: ", self.agent.unique_id, " not selling ", 
-                    a_good_or_service.name_of_gs,
-                    "is not in inventory"])
-            return False
         
     
     def payment(self,an_agent, date, value):
@@ -123,43 +103,7 @@ class Bookkeeper(object):
          Basic method to receive a payment.
          Executed only by the payment method.
          """
-         self.cash_flow.influx(date, an_agent,value)
-    
-    def add_inventory(self, a_good_or_service):
-        """
-        Method to add a good quantity to the inventory.
-        The value_of_gs in the unitary value and is updated at every add 
-        or subtraction made in the inventory
-        If the good or service doesn`t exist in the inventory, it is included.
-        """
-        if a_good_or_service.name_of_gs in self.inventory:
-            gs = self.inventory[a_good_or_service.name_of_gs]
-            gs.quantity_of_gs += a_good_or_service.quantity_of_gs
-            gs.value_of_gs += a_good_or_service.value_of_gs
-            gs.unit_value_of_gs = (gs.unit_value_of_gs + a_good_or_service.unit_value_of_gs)/2
-            """ TO DO - To verify good value updating method """
-            return True
-        else:                 
-            self.inventory[a_good_or_service.name_of_gs] = a_good_or_service
-            return True                  
-
-    def subtract_inventory(self,a_good_or_service):
-        """
-        Method to subtract a good quantity from the inventory.
-        The value_of_gs in the unitary value and is updated at every add 
-        or subtraction made in the inventory
-        """
-        if a_good_or_service.name_of_gs in self.inventory:
-            gs = self.inventory[a_good_or_service.name_of_gs]
-            if gs.quantity_of_gs >= a_good_or_service.quantity_of_gs:
-                gs.quantity_of_gs -= a_good_or_service.quantity_of_gs
-                gs.value_of_gs += a_good_or_service.value_of_gs
-                gs.unit_value_of_gs = (gs.unit_value_of_gs + a_good_or_service.unit_value_of_gs)/2
-                """ TO DO - To verify good value updating method """
-                return True
-            else:                 
-                 return False
-            return False            
+         self.cash_flow.influx(date, an_agent,value)     
         
     
     def get_asset(self, an_asset_name):
@@ -184,15 +128,19 @@ class BalanceSheet(object):
     Class responsible for the balance sheet of the agent.
     Includes:
         Assets:
-            Short term assets
-            Long term assets
+          10  Short term assets
+              11  Cash
+              12  Inventory Goods      
+          20  Long term assets
         Liabilities:
-            Short term liabilties
-            Long term liabilities
+          30   Short term liabilties
+          40  Long term liabilities
      
     This class controls all financial records for the agent accounting
     Is updated only by the bookkeeper    
     """
+    # Check the necessity to change the balance items codes
+    
     assets = dict()
     liabilities = dict()  
 
@@ -221,19 +169,19 @@ class BalanceSheet(object):
             return True           
         else:         
             return False
-        
-        
+            
 
     def add_asset(self, a_good_or_service):
         """ 
         Add the quantity and value of one existing asset of the agent
         If the asset is not in the assets dict, it is included.
         """
-        if a_good_or_service in self.assets:
+        if a_good_or_service.name_of_gs in self.assets:
             my_gs = self.assets[a_good_or_service.name_of_gs]
             my_gs.quantity_of_gs += a_good_or_service.quantity_of_gs
             my_gs.value_of_gs += a_good_or_service.value_of_gs
             my_gs.unit_value_of_gs = a_good_or_service.unit_value_of_gs
+            my_gs.avg_value_of_gs = (a_good_or_service.unit_value_of_gs + my_gs.unit_value_of_gs)/2
         else:
             self.assets[a_good_or_service.name_of_gs] = a_good_or_service
         return True
@@ -243,16 +191,32 @@ class BalanceSheet(object):
         Subtract the quantity and value of one existing asset of the agent
         If the asset is not in the assets dict returns False.
         """
-        if a_good_or_service in self.assets:
+        if a_good_or_service.name_of_gs in self.assets:
             my_gs = self.assets[a_good_or_service.name_of_gs]
             my_gs.quantity_of_gs -= a_good_or_service.quantity_of_gs
             my_gs.value_of_gs -= a_good_or_service.value_of_gs
             my_gs.unit_value_of_gs = a_good_or_service.unit_value_of_gs
+            my_gs.avg_value_of_gs = (a_good_or_service.unit_value_of_gs + my_gs.unit_value_of_gs)/2
             return True
         else:
             return False
         
+    def have_asset(self, a_gs):
+           if a_gs.name_of_gs in self.assets:
+              if self.assets[a_gs.name_of_gs].quantity_of_gs >= a_gs.quantity_of_gs:
+                 return True
+              else: 
+                 print(["have_asset - Insuficient quantity"])
+                 return False
+           else:
+               print(["have_asset - does not have gs"])
+               return False
+        
+
+
+        
     def show_assets(self):
+        
         print([self.owner.unique_id])           
 
         for an_asset_name in self.assets:
@@ -460,6 +424,7 @@ class GoodOrService(object):
     value_of_gs = 0.0
     quantity_of_gs = 0.0
     unit_value_of_gs = 0.0
+    avg_value_of_gs = 0.0
 
     
     def __init__(self,name_of_gs, type_of_gs, quantity_of_gs,unit_value_of_gs, value_of_gs):
@@ -468,6 +433,7 @@ class GoodOrService(object):
         self.value_of_gs = value_of_gs
         self.quantity_of_gs = quantity_of_gs
         self.unit_value_of_gs = unit_value_of_gs
+        self.avg_value_of_gs = unit_value_of_gs
         
         
     def name_of_gs(self):

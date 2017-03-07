@@ -69,7 +69,6 @@ class DumbEcoModel(Model):
     initial_assets = None
     initial_liabilities = None
     initial_cash = None 
-    initial_inventory = None
     labor_market = None
     goods_market = None
 
@@ -100,7 +99,6 @@ class DumbEcoModel(Model):
         self.initial_assets = dict()
         self.initial_liabilities = dict()
         self.initial_cash = 100.0
-        self.initial_inventory = dict()
         
         
         self.economy = Economy("DumbEconomy", self)
@@ -120,9 +118,7 @@ class DumbEcoModel(Model):
 
         self.initial_assets = dict()
         self.initial_liabilities = dict()
- 
-        self.initial_inventory = dict()
-   
+    
         # initialize households    
         for i in range(self.num_households):
             self.initial_cash = 10.0 
@@ -150,13 +146,9 @@ class DumbEcoModel(Model):
                                          value_of_food_demmand)
             self.initial_liabilities = {food_demmand.name_of_gs:food_demmand} 
 
-            # Initialize Household inventory
-            self.initial_inventory_hh = {food.name_of_gs:food,
-                                         available_labor.name_of_gs:available_labor} 
-        
+      
             fm = DumbHousehold(i, self, self.economy, self.initial_assets,
-                               self.initial_liabilities, self.initial_cash, 
-                               self.initial_inventory_hh)
+                               self.initial_liabilities, self.initial_cash)
             self.schedule.add(fm)
             self.grid.place_agent(fm, (0, 3))
             fm.enter_labor_market(self.labor_market)
@@ -179,12 +171,9 @@ class DumbEcoModel(Model):
             value_of_labor = quantity_of_labor*price_of_labor
             demmanded_labor = GoodOrService("labor",1,quantity_of_labor,price_of_labor,value_of_labor)
             self.initial_liabilities = {demmanded_labor.name_of_gs:demmanded_labor}
-            # initialize firm inventory
-            self.initial_inventory_firm = {produced_food.name_of_gs:produced_food} 
             
             f1 = DumbFirm(i, self, self.economy, self.initial_assets,
-                          self.initial_liabilities, self.initial_cash, 
-                          self.initial_inventory_firm)
+                          self.initial_liabilities, self.initial_cash)
             self.schedule.add(f1)
             self.grid.place_agent(f1, (0, 4))
             f1.enter_labor_market(self.labor_market)
