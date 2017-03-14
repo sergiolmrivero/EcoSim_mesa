@@ -37,21 +37,21 @@ class Bookkeeper(object):
         """
         date = self.agent.model.schedule.time
         if self.have_cash(price):
-            if agent_seller.sell_gs(self.agent,a_good_or_service,price):
-                self.cash_flow.outflux(date,agent_seller, price)
+            if agent_seller.bookkeeper.sell_gs(self.agent,a_good_or_service,price):
+                self.cash_flow.outflux(date,agent_seller.unique_id, price)
                 self.balance_sheet.update_cash(self.cash_flow.available_cash)
                 self.balance_sheet.add_asset(a_good_or_service)
-                print(["Agent: ", self.agent.unique_id, " buying: ", 
-                       a_good_or_service.name_of_gs,
-                       "from: ", agent_seller.unique_id])
+                #print(["Agent: ", self.agent.unique_id, " buying: ", 
+                #       a_good_or_service.name_of_gs,
+                #       "from: ", agent_seller.unique_id])
                 return True
             else:
-                print(["buy_gs - Agent: ", agent_seller.unique_id, " not selling ", 
-                       a_good_or_service.name_of_gs,
-                       "for: ", self.agent.unique_id, "***"])
+                #print(["buy_gs - Agent: ", agent_seller.unique_id, " not selling ", 
+                #       a_good_or_service.name_of_gs,
+                #       "for: ", self.agent.unique_id, "***"])
                 return False
         else:
-            print(["buy_gs - Agent: ", self.agent.unique_id, " doesn't have cash"])
+            #print(["buy_gs - Agent: ", self.agent.unique_id, " doesn't have cash"])
             return False
     
     
@@ -66,14 +66,14 @@ class Bookkeeper(object):
         """
         date = self.agent.model.schedule.time
         if self.balance_sheet.have_asset(a_good_or_service):
-            self.cash_flow.influx(date,agent_buyer, price)
+            self.cash_flow.influx(date,agent_buyer.unique_id, price)
             self.balance_sheet.update_cash(self.cash_flow.available_cash)
             self.balance_sheet.subtract_asset(a_good_or_service)
             return True
         else:
-            print(["sell_gs - Agent: ", self.agent.unique_id, " not selling:", 
-                   a_good_or_service.name_of_gs, "to: ",agent_buyer.unique_id,
-                   "doesn't have gs"])
+            #print(["sell_gs - Agent: ", self.agent.unique_id, " not selling:", 
+            #       a_good_or_service.name_of_gs, "to: ",agent_buyer.unique_id,
+            #       "doesn't have gs"])
             return False
         
     def have_cash(self,value):
@@ -164,11 +164,7 @@ class BalanceSheet(object):
                        
     def update_cash(self, value):
         """ Update agent cash in a balance_sheet object"""
-        if 'cash' in self.assets:
-            self.assets['cash'].value_of_gs = value
-            return True           
-        else:         
-            return False
+        self.assets['cash'].value_of_gs = value
             
 
     def add_asset(self, a_good_or_service):
@@ -199,6 +195,7 @@ class BalanceSheet(object):
             my_gs.avg_value_of_gs = (a_good_or_service.unit_value_of_gs + my_gs.unit_value_of_gs)/2
             return True
         else:
+            #print(["subtract_asset - asset no in assets"])
             return False
         
     def have_asset(self, a_gs):
@@ -206,10 +203,10 @@ class BalanceSheet(object):
               if self.assets[a_gs.name_of_gs].quantity_of_gs >= a_gs.quantity_of_gs:
                  return True
               else: 
-                 print(["have_asset - Insuficient quantity"])
+                 #print(["have_asset - Insuficient quantity"])
                  return False
            else:
-               print(["have_asset - does not have gs"])
+               #print(["have_asset - does not have gs"])
                return False
         
 
@@ -347,6 +344,7 @@ class CashFlow(object):
         if self.available_cash >= value:
             self.available_cash -= value
             self.transactions[(date,agent)] = value
+            value = 0.0
         else:
             value -= self.available_cash
             self.transactions[(date,agent)] = self.available_cash

@@ -2,26 +2,26 @@
 """
 Created on Sun Jan 29 00:42:52 2017
 
-@author: Hilder
+@author: Hilder/Sergio
 """
 from mesa.visualization.modules import ChartModule
 from mesa.visualization.ModularVisualization import ModularServer
 from dumbEcoModel import DumbEcoModel
 
 chart1 = ChartModule([
-                     {"Label":"GoodsQt","Color":"Black"}],
+                     {"Label":"GoodsVl","Color":"Black"}],
                      data_collector_name='datacollector',
                      )
 chart2 = ChartModule([
-                     {"Label":"GoodsVl","Color":"Red"}],
+                     {"Label":"LaborVl","Color":"Green"}],
                      data_collector_name='datacollector',
                      )
 chart3 = ChartModule([
-                     {"Label":"LaborQt","Color":"Green"}],
+                     {"Label":"Net_Worth","Color":"Green"}],
                      data_collector_name='datacollector',
                      )
 chart4 = ChartModule([
-                     {"Label":"LaborVl","Color":"Blue"}],
+                     {"Label":"Total_Cash","Color":"Green"}],
                      data_collector_name='datacollector',
                      )
 firms = 3

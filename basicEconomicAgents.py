@@ -11,7 +11,7 @@ Modified on Fri Feb 10 17:06:00 2017
 """
 
 from mesa import Agent
-from accounting import Bookkeeper, GoodOrService
+from accounting import Bookkeeper
 
 
 class Economy(Agent):
@@ -60,22 +60,24 @@ class Market(Agent):
             bid = self.offers[bidder]
             if bid.quantity_of_gs < a_quantity:
                 a_quantity -= bid.quantity_of_gs
-                a_buyer.buy_gs(bidder, bid, bid.unit_value_of_gs)
+                a_buyer.bookkeeper.buy_gs(bidder, bid, bid.unit_value_of_gs)
+                self.total_sells_qt += bid.quantity_of_gs
+                self.total_sells_vl += bid.quantity_of_gs*bid.unit_value_of_gs
                 bid.quantity_of_gs = 0.0
-                self.total_sells_qt += a_quantity
-                self.total_sells_vl += a_quantity*bid.unit_value_of_gs
             else:
-                my_demmand = GoodOrService(bid.name_of_gs,
-                                           bid.type_of_gs,a_quantity,
-                                           bid.unit_value_of_gs,
-                                           bid.value_of_gs) 
-                a_buyer.buy_gs(bidder,my_demmand , bid.unit_value_of_gs)
+                a_buyer.bookkeeper.buy_gs(bidder,bid , bid.unit_value_of_gs)
                 bid.quantity_of_gs -= a_quantity
                 self.total_sells_qt += a_quantity
                 self.total_sells_vl += a_quantity*bid.unit_value_of_gs
                 a_quantity = 0.0
-                return True
+        
+ 
+    def clean_zero_bids(self):
+        self.offers = {bidder:bid 
+                       for bidder, bid in self.offers.items() 
+                       if bid.quantity_of_gs > 0.0}
                 
+        
                 
     def offers_value(self):
         total_offers = 0.0
@@ -98,8 +100,6 @@ class Market(Agent):
         else:
             return 0.0
         
-    def auction(self):
-        pass
     
     def step(self):
         pass
@@ -140,9 +140,6 @@ class EconomicAgent (Agent):
         self.bookkeeper.buy_gs(a_seller, a_good_or_service,price)
         self.update_available_cash()
 
-    def sell_gs(self, a_buyer, a_good_or_service, price):
-        self.bookkeeper.sell_gs(a_buyer, a_good_or_service,price)
-        self.update_available_cash()
 
     def update_net_worth(self):
         self.net_worth = self.bookkeeper.net_worth()
