@@ -11,20 +11,23 @@ Modified on Fri Feb 10 17:06:00 2017
 
 """
 
+from random import random
+
 from mesa import Model
-from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
+from mesa.space import MultiGrid
 from mesa.time import RandomActivation
+
+from accounting import GoodOrService
 from basicEconomicAgents import Economy, Market
 from dumbEconomicAgents import DumbFirm, DumbHousehold
-from random import random
-from accounting import GoodOrService
 
 
 #definir funções de calcular aqui
 def compute_net_worth(model):
     agents_worth = [agent.net_worth for agent in model.schedule.agents]
     total_worth = sum(agents_worth)
+    print(total_worth)
     return total_worth
    
 def available_cash(model):
@@ -68,30 +71,38 @@ class DumbEcoModel(Model):
     initial_assets = None
     initial_liabilities = None
     initial_cash = None 
+    initial_inventory = None
     labor_market = None
     goods_market = None
 
-    def __init__(self, n1, f):
+    def __init__(self):
         
-        self.num_firms = n1
-        self.num_households = f
+        self.num_firms = 3
+    #    self.num_firms2 = n2
+        self.num_households = 30
         self.running = True
         self.grid = MultiGrid(1, 5, True)
         self.result = 0
         #posso criar meu scheduler se for o caso
         self.schedule = RandomActivation(self)
         self.datacollector = DataCollector(
-                model_reporters={"GoodsVl": goods_vl,
-                                 "LaborVl": labor_vl,
-                                 "Net_Worth": compute_net_worth,
-                                 "Total_Cash":available_cash}
+                model_reporters={"GoodsQt": goods_qt,
+                                 "GoodsVl": goods_vl,
+                                 "LaborQt": labor_qt,
+                                 "LaborVl": labor_vl}
              )
          
         
-
+#        )
+  
+#        self.datacollector = DataCollector(
+#           model_reporters={"Labor": computeN1,"Goods": getResult}
+            
+#       )
         self.initial_assets = dict()
         self.initial_liabilities = dict()
         self.initial_cash = 100.0
+        self.initial_inventory = dict()
         
         
         self.economy = Economy("DumbEconomy", self)
@@ -111,7 +122,9 @@ class DumbEcoModel(Model):
 
         self.initial_assets = dict()
         self.initial_liabilities = dict()
-    
+ 
+        self.initial_inventory = dict()
+   
         # initialize households    
         for i in range(self.num_households):
             self.initial_cash = 10.0 
@@ -130,7 +143,7 @@ class DumbEcoModel(Model):
                                    food.name_of_gs:food} 
  
             # Intialize Household liabilities                    
-            quantity_of_food_demmand = random()*150.0
+            quantity_of_food_demmand = random()*130.0
             price_of_food_demmand = 0.1
             value_of_food_demmand = quantity_of_food_demmand*price_of_food_demmand                      
             food_demmand = GoodOrService("food_demmand",1,
@@ -139,9 +152,13 @@ class DumbEcoModel(Model):
                                          value_of_food_demmand)
             self.initial_liabilities = {food_demmand.name_of_gs:food_demmand} 
 
-      
-            fm = DumbHousehold("HH"+str(i), self, self.economy, self.initial_assets,
-                               self.initial_liabilities, self.initial_cash)
+            # Initialize Household inventory
+            self.initial_inventory_hh = {food.name_of_gs:food,
+                                         available_labor.name_of_gs:available_labor} 
+        
+            fm = DumbHousehold(i, self, self.economy, self.initial_assets,
+                               self.initial_liabilities, self.initial_cash, 
+                               self.initial_inventory_hh)
             self.schedule.add(fm)
             self.grid.place_agent(fm, (0, 3))
             fm.enter_labor_market(self.labor_market)
@@ -164,9 +181,12 @@ class DumbEcoModel(Model):
             value_of_labor = quantity_of_labor*price_of_labor
             demmanded_labor = GoodOrService("labor",1,quantity_of_labor,price_of_labor,value_of_labor)
             self.initial_liabilities = {demmanded_labor.name_of_gs:demmanded_labor}
+            # initialize firm inventory
+            self.initial_inventory_firm = {produced_food.name_of_gs:produced_food} 
             
-            f1 = DumbFirm("F"+ str(i), self, self.economy, self.initial_assets,
-                          self.initial_liabilities, self.initial_cash)
+            f1 = DumbFirm(i, self, self.economy, self.initial_assets,
+                          self.initial_liabilities, self.initial_cash, 
+                          self.initial_inventory_firm)
             self.schedule.add(f1)
             self.grid.place_agent(f1, (0, 4))
             f1.enter_labor_market(self.labor_market)
@@ -175,6 +195,7 @@ class DumbEcoModel(Model):
             
    
     def step(self):
+        print([self.schedule.time," my_step"])
         self.schedule.step()
         # restart market variables
         self.datacollector.collect(self)
@@ -189,10 +210,9 @@ class DumbEcoModel(Model):
         self.labor_market.total_sells_qt = 0.0
         self.goods_market.total_sells_vl = 0.0
         self.labor_market.total_sells_vl = 0.0
-        
 
 
-
+        print([self.schedule.time,"passei"])
    
     
     def run_model(self, n):

@@ -11,27 +11,27 @@ Modified on Fri Feb 10 17:06:00 2017
 """
 
 from mesa import Agent
-from accounting import Bookkeeper
+
+from accounting import Bookkeeper, GoodOrService
 
 
 class Economy(Agent):
-      net_worth = 0.0
-      available_cash = 0.0
-      
-      def __init__(self, ag_name, econModel):
-        
-          super().__init__(ag_name, econModel)
-          self.net_worth = 0.0
-          self.available_cash = 0.0
+    net_worth = 0.0
+    available_cash = 0.0
+    
+    def __init__(self, ag_name, econModel):
+        super().__init__(ag_name, econModel)
+        self.net_worth = 0.0
+        self.available_cash = 0.0
       
 
-      def getResult(self):
-          #coletar os resultados
-          self.result+=1
+    def getResult(self):
+        #coletar os resultados
+        self.result+=1
         
         
-      def step(self):
-          pass
+    def step(self):
+        pass
         
 
 
@@ -43,7 +43,7 @@ class Market(Agent):
     total_sells_qt = 0.0
     total_sells_vl = 0.0
     
-    def __init_(self, market_name, econModel):
+    def __init__(self, market_name, econModel):
         super().__init__(market_name, econModel)
         self.offers = dict()
         self.net_worth = 0.0
@@ -60,24 +60,22 @@ class Market(Agent):
             bid = self.offers[bidder]
             if bid.quantity_of_gs < a_quantity:
                 a_quantity -= bid.quantity_of_gs
-                a_buyer.bookkeeper.buy_gs(bidder, bid, bid.unit_value_of_gs)
-                self.total_sells_qt += bid.quantity_of_gs
-                self.total_sells_vl += bid.quantity_of_gs*bid.unit_value_of_gs
+                a_buyer.buy_gs(bidder, bid, bid.unit_value_of_gs)
                 bid.quantity_of_gs = 0.0
+                self.total_sells_qt += a_quantity
+                self.total_sells_vl += a_quantity*bid.unit_value_of_gs
             else:
-                a_buyer.bookkeeper.buy_gs(bidder,bid , bid.unit_value_of_gs)
+                my_demmand = GoodOrService(bid.name_of_gs,
+                                           bid.type_of_gs,a_quantity,
+                                           bid.unit_value_of_gs,
+                                           bid.value_of_gs) 
+                a_buyer.buy_gs(bidder,my_demmand , bid.unit_value_of_gs)
                 bid.quantity_of_gs -= a_quantity
                 self.total_sells_qt += a_quantity
                 self.total_sells_vl += a_quantity*bid.unit_value_of_gs
                 a_quantity = 0.0
-        
- 
-    def clean_zero_bids(self):
-        self.offers = {bidder:bid 
-                       for bidder, bid in self.offers.items() 
-                       if bid.quantity_of_gs > 0.0}
+                return True
                 
-        
                 
     def offers_value(self):
         total_offers = 0.0
@@ -100,6 +98,8 @@ class Market(Agent):
         else:
             return 0.0
         
+    def auction(self):
+        pass
     
     def step(self):
         pass
@@ -123,12 +123,12 @@ class EconomicAgent (Agent):
 
   
     def __init__(self, ag_name, econModel, economy, initial_assets,
-                 initial_liabilities, initial_cash):
+                 initial_liabilities, initial_cash, initial_inventory):
         super().__init__(ag_name, econModel)
         self.economy = economy
         self.markets = dict()
         self.bookkeeper = Bookkeeper(self,initial_assets,initial_liabilities, 
-                                     initial_cash)
+                                     initial_cash, initial_inventory)
         self.net_worth = 0.0
         self.available_cash = initial_cash
       
@@ -140,6 +140,9 @@ class EconomicAgent (Agent):
         self.bookkeeper.buy_gs(a_seller, a_good_or_service,price)
         self.update_available_cash()
 
+    def sell_gs(self, a_buyer, a_good_or_service, price):
+        self.bookkeeper.sell_gs(a_buyer, a_good_or_service,price)
+        self.update_available_cash()
 
     def update_net_worth(self):
         self.net_worth = self.bookkeeper.net_worth()
@@ -156,7 +159,7 @@ class EconomicAgent (Agent):
     
     
     
- #definir classes Agent aqui
+#definir classes Agent aqui
 
 class Firm (EconomicAgent):
     
@@ -164,10 +167,10 @@ class Firm (EconomicAgent):
     
     
     def __init__(self, ag_name, econModel, economy, initial_assets,
-                 initial_liabilities, initial_cash):
+                 initial_liabilities, initial_cash, initial_inventory):
         
-         super().__init__(ag_name, econModel, economy, initial_assets,
-                          initial_liabilities, initial_cash)
+        super().__init__(ag_name, econModel, economy, initial_assets,
+                          initial_liabilities, initial_cash, initial_inventory)
           
 
     def supply(self, an_agent, a_good_or_service, value):
@@ -191,10 +194,10 @@ class Household (EconomicAgent):
     hh_members = None
     
     def __init__(self, ag_name, econModel, economy, initial_assets,
-                 initial_liabilities, initial_cash):
+                 initial_liabilities, initial_cash, initial_inventory):
         
-         super().__init__(ag_name, econModel, economy, initial_assets,
-                          initial_liabilities, initial_cash)
+        super().__init__(ag_name, econModel, economy, initial_assets,
+                          initial_liabilities, initial_cash, initial_inventory)
 
     def consume(self, an_agent, a_good_or_service, value):
         pass   
@@ -208,10 +211,10 @@ class Household (EconomicAgent):
 class Bank (EconomicAgent):
     
     def __init__(self, ag_name, econModel, economy, initial_assets,
-                 initial_liabilities, initial_cash):
+                 initial_liabilities, initial_cash, initial_inventory):
        
-         super().__init__(ag_name, econModel, economy, initial_assets,
-                          initial_liabilities, initial_cash)
+        super().__init__(ag_name, econModel, economy, initial_assets,
+                          initial_liabilities, initial_cash, initial_inventory)
 
     def interest(self, paying_receivin, an_agent):
         pass    
@@ -224,10 +227,10 @@ class Bank (EconomicAgent):
 class Government (EconomicAgent):
     
     def __init__(self, ag_name, econModel, economy, initial_assets,
-                 initial_liabilities, initial_cash):
+                 initial_liabilities, initial_cash, initial_inventory):
         
-         super().__init__(ag_name, econModel, economy, initial_assets,
-                          initial_liabilities, initial_cash)
+        super().__init__(ag_name, econModel, economy, initial_assets,
+                          initial_liabilities, initial_cash, initial_inventory)
 
         
     def cash_transfer(self, a_household):
@@ -246,10 +249,10 @@ class Government (EconomicAgent):
 
 class CentralBank (EconomicAgent):
     def __init__(self, ag_name, econModel, economy, initial_assets,
-                 initial_liabilities, initial_cash):
-       
-         super().__init__(ag_name, econModel, economy, initial_assets,
-                          initial_liabilities, initial_cash)
+                 initial_liabilities, initial_cash, initial_inventory):
+        
+        super().__init__(ag_name, econModel, economy, initial_assets,
+                          initial_liabilities, initial_cash, initial_inventory)
 
     
     def interest(self, a_bank):
@@ -257,6 +260,8 @@ class CentralBank (EconomicAgent):
 
     def step(self):
         pass    
+    
+    
     
     
     
